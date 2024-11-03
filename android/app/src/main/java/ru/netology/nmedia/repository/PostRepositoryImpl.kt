@@ -59,7 +59,23 @@ class PostRepositoryImpl(
     }
 
     override suspend fun removeById(id: Long) {
-        TODO("Not yet implemented")
+
+        postDao.removeById(id)
+
+        try{
+            
+            val response = PostsApi.service.removeById(id)
+
+
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
     }
 
     override suspend fun likeById(id: Long) {
