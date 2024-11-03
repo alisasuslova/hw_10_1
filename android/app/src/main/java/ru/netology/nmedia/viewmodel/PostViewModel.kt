@@ -23,8 +23,10 @@ private val empty = Post(
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     // упрощённый вариант
-    private val repository: PostRepository =
-        PostRepositoryImpl(AppDb.getInstance(context = application).postDao())
+    private val repository: PostRepository = with(AppDb.getInstance(context = application)) {
+        PostRepositoryImpl(postDao(), draftDao())
+    }
+
 
     val data: LiveData<FeedModel> = repository.data.map(::FeedModel)
     private val _dataState = MutableLiveData<FeedModelState>()
