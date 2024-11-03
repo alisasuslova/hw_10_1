@@ -3,6 +3,7 @@ package ru.netology.nmedia.repository
 import androidx.lifecycle.*
 import kotlinx.coroutines.flow.combine
 import okio.IOException
+import retrofit2.http.POST
 import ru.netology.nmedia.api.*
 import ru.netology.nmedia.dao.DraftDao
 import ru.netology.nmedia.dao.PostDao
@@ -62,6 +63,46 @@ class PostRepositoryImpl(
     }
 
     override suspend fun likeById(id: Long) {
-        TODO("Not yet implemented")
+
+
+        //бд
+        val entity = postDao.getById(id)
+
+        val updated = entity.copy(
+            likedByMe = !entity.likedByMe,
+            likes = if (entity.likedByMe) entity.likes - 1 else entity.likes + 1
+        )
+
+        postDao.insert(updated)
+
+        try {
+
+            //запрос
+            val response = if (entity.likedByMe) {
+                PostsApi.service.dislikeById(id)
+            } else {
+                PostsApi.service.likeById(id)
+            }
+
+            entity.toDto()
+
+            //проверяем ответ
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+
+            //запись в базу
+            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            postDao.insert(PostEntity.fromDto(body))
+
+        } catch (e: IOException) {
+            postDao.insert(entity)
+            throw NetworkError
+        } catch (e: Exception) {
+            postDao.insert(entity)
+            throw UnknownError
+        }
+
+
     }
 }
