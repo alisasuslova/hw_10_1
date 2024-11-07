@@ -63,7 +63,7 @@ class PostRepositoryImpl(
         postDao.removeById(id)
 
         try{
-            
+
             val response = PostsApi.service.removeById(id)
 
 
